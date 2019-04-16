@@ -152,6 +152,7 @@ public abstract class BeanDefinitionReaderUtils {
 	}
 
 	/**
+	 * 把 BeanDefinitionHolder 对象放到 BeanDefinitionRegistry.beanDefinitionMap 对象里面 <br/>
 	 * Register the given bean definition with the given bean factory.
 	 * @param definitionHolder the bean definition including name and aliases
 	 * @param registry the bean factory to register with

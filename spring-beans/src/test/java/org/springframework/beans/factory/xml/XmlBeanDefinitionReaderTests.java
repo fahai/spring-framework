@@ -96,6 +96,9 @@ public class XmlBeanDefinitionReaderTests {
 		testBeanDefinitions(registry);
 	}
 
+	/**
+	 * 读取 XML 配置文件内容解析成 BeanDefinition
+	 */
 	@Test
 	public void withFreshInputStream() {
 		SimpleBeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();

@@ -191,6 +191,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			importBeanDefinitionResource(ele);
 		}
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
+			// TODO 后面有部分看的不是很明白
 			processAliasRegistration(ele);
 		}
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
@@ -198,11 +199,14 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
 			// recurse
+			// TODO
 			doRegisterBeanDefinitions(ele);
 		}
 	}
 
 	/**
+	 * 获取 import 元素里面的 resource 属性：一个文件地址
+	 * 文件地址可以是 URL，可以是绝对路径表示，可以是相对路径表示
 	 * Parse an "import" element and load the bean definitions
 	 * from the given resource into the bean factory.
 	 */
@@ -268,6 +272,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 		Resource[] actResArray = actualResources.toArray(new Resource[0]);
+		// TODO 解析完成后的事件处理
 		getReaderContext().fireImportProcessed(location, actResArray, extractSource(ele));
 	}
 
@@ -299,6 +304,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	}
 
 	/**
+	 * 根据 Element 解析出来 BeanDefinition，并组装成 BeanDefinitionHolder <br/>
+	 * 装饰 BeanDefinition ? <br/>
+	 *
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
 	 */
@@ -315,6 +323,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						bdHolder.getBeanName() + "'", ele, ex);
 			}
 			// Send registration event.
+			// TODO 发送注册事件：找不到观察者模式
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}
