@@ -531,6 +531,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				// 把 BeanPostProcessor 维护到 beanFactory.beanPostProcessors 列表对象里面
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
@@ -579,6 +580,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Prepare this context for refreshing, setting its startup date and
 	 * active flag as well as performing any initialization of property sources.
+	 * <p>设置 startup 日期和 active 标记，还有初始化相关的属性对象: earlyApplicationListeners, applicationListeners, earlyApplicationEvents</p>
 	 */
 	protected void prepareRefresh() {
 		// Switch to active.
@@ -628,6 +630,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * Tell the subclass to refresh the internal bean factory.
+	 * <p>refreshBeanFactory() 和 getBeanFactory() 方法都需要子类去实现</p>
+	 * <p>ClassPathXmlApplicationContext 对应 AbstractRefreshableApplicationContext </p>
+	 * <p>AnnotationApplicationContext 对应 GenericApplicationContext </p>
 	 * @return the fresh BeanFactory instance
 	 * @see #refreshBeanFactory()
 	 * @see #getBeanFactory()
@@ -640,6 +645,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Configure the factory's standard context characteristics,
 	 * such as the context's ClassLoader and post-processors.
+	 * <p>配置 factory 的标准 context 属性，例如 ClassLoader, post-processors</p>
 	 * @param beanFactory the BeanFactory to configure
 	 */
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
@@ -1214,6 +1220,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return getBeanFactory().getBeanNamesForType(type);
 	}
 
+	/**
+	 * TODO 这个方法使用频率很好，ApplicationContext 需要维护的信息基本上都是通过该方法来获取
+	 */
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 		assertBeanFactoryActive();
