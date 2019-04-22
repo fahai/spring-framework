@@ -37,6 +37,9 @@ import org.springframework.tests.sample.beans.factory.DummyFactory;
 import static org.junit.Assert.*;
 
 /**
+ * 加载 Bean 的流程<br/>
+ * <p> AbstractBeanFactoryTests 是一个抽象类，所以在运行时，需要选择对应的子类，例如 XmlListableBeanFactoryTests 类。
+ * <p> 这个类主要跟一下 getBean() 方法
  * Subclasses must initialize the bean factory and any other variables they need.
  *
  * @author Rod Johnson
