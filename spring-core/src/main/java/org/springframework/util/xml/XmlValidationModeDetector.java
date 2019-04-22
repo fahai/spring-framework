@@ -47,11 +47,13 @@ public class XmlValidationModeDetector {
 
 	/**
 	 * Indicates that DTD validation should be used (we found a "DOCTYPE" declaration).
+	 * <p>如果找到 DOCTYPE 关键字的声明，那边便判断为 DTD 验证模式</p>
 	 */
 	public static final int VALIDATION_DTD = 2;
 
 	/**
 	 * Indicates that XSD validation should be used (found no "DOCTYPE" declaration).
+	 * <p>如果没有找到 DOCTYPE 关键字的声明，那边便判断为 XSD 验证模式</p>
 	 */
 	public static final int VALIDATION_XSD = 3;
 
@@ -75,6 +77,7 @@ public class XmlValidationModeDetector {
 
 	/**
 	 * Indicates whether or not the current parse position is inside an XML comment.
+	 * <p>用来帮助判断 XML 的多行注释的变量</p>
 	 */
 	private boolean inComment;
 
@@ -82,6 +85,7 @@ public class XmlValidationModeDetector {
 	/**
 	 * Detect the validation mode for the XML document in the supplied {@link InputStream}.
 	 * Note that the supplied {@link InputStream} is closed by this method before returning.
+	 * <p>跳过 XML 的注释行，遍历到正文内容或者识别到 "DOCTYPE" 关键字就给出检测结果</p>
 	 * @param inputStream the InputStream to parse
 	 * @throws IOException in case of I/O failure
 	 * @see #VALIDATION_DTD
@@ -95,18 +99,22 @@ public class XmlValidationModeDetector {
 			String content;
 			while ((content = reader.readLine()) != null) {
 				content = consumeCommentTokens(content);
+				// 如果是 XML 多行注释的场景，那么便会走 continue 的逻辑
 				if (this.inComment || !StringUtils.hasText(content)) {
 					continue;
 				}
+				// content 内容是否包含 'DOCTYPE' 关键字
 				if (hasDoctype(content)) {
 					isDtdValidated = true;
 					break;
 				}
+				// content 内容包含有 '<' 符号，而且跟在其后面的是字母，表明已经遍历到 XML 文件的正文内容了 XML，验证模式的声明行已经遍历完了，可以结束遍历了
 				if (hasOpeningTag(content)) {
 					// End of meaningful data...
 					break;
 				}
 			}
+			// 如果 XML 验证模式没有明确声明为 DTD，默认值会判断为 XSD 模式
 			return (isDtdValidated ? VALIDATION_DTD : VALIDATION_XSD);
 		}
 		catch (CharConversionException ex) {

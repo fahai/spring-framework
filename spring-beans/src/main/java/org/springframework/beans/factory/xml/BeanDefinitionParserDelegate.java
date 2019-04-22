@@ -234,6 +234,7 @@ public class BeanDefinitionParserDelegate {
 	private final ParseState parseState = new ParseState();
 
 	/**
+	 * 保存了所有使用过的 bean 名字和别名，用来判断名称是否已被使用
 	 * Stores all used bean names so we can enforce uniqueness on a per
 	 * beans-element basis. Duplicate bean ids/names may not exist within the
 	 * same level of beans element nesting, but may be duplicated across levels.
@@ -408,6 +409,8 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Parses the supplied {@code <bean>} element. May return {@code null}
 	 * if there were errors during parse. Errors are reported to the
+	 * <p>先处理 bean 的 ID 和 name 属性，这是 BeanDefinitionHolder 类的成员变量，用来创建其实例。
+	 * <p>其他属性的解析委托给 parseBeanDefinitionElement() 方法。
 	 * {@link org.springframework.beans.factory.parsing.ProblemReporter}.
 	 */
 	@Nullable
@@ -415,6 +418,7 @@ public class BeanDefinitionParserDelegate {
 		String id = ele.getAttribute(ID_ATTRIBUTE);
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 
+		// 支持配置多个别名
 		List<String> aliases = new ArrayList<>();
 		if (StringUtils.hasLength(nameAttr)) {
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
@@ -436,6 +440,7 @@ public class BeanDefinitionParserDelegate {
 
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
 		if (beanDefinition != null) {
+			// TODO beanName 为空的解析逻辑
 			if (!StringUtils.hasText(beanName)) {
 				try {
 					if (containingBean != null) {
@@ -472,6 +477,7 @@ public class BeanDefinitionParserDelegate {
 	}
 
 	/**
+	 * 根据给定的 beanName 和别名列表是否被使用过
 	 * Validate that the specified bean name and aliases have not been used already
 	 * within the current level of beans element nesting.
 	 */
@@ -514,15 +520,21 @@ public class BeanDefinitionParserDelegate {
 		try {
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
+			// 解析 bean 元素的属性
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
+			// 解析 meta 属性
 			parseMetaElements(ele, bd);
+			// 解析 lookup-method 属性
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
+			// 解析 replaced-method 属性
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
-
+			// 解析 constructor-arg 属性
 			parseConstructorArgElements(ele, bd);
+			// 解析 property 属性
 			parsePropertyElements(ele, bd);
+			// 解析 qualifier 属性
 			parseQualifierElements(ele, bd);
 
 			bd.setResource(this.readerContext.getResource());
@@ -548,6 +560,7 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Apply the attributes of the given bean element to the given bean * definition.
+	 * <p>提取 Element 的属性，设置到 BeanDefinition 对象里面</p>
 	 * @param ele bean declaration element
 	 * @param beanName bean name
 	 * @param containingBean containing bean definition
@@ -1370,6 +1383,9 @@ public class BeanDefinitionParserDelegate {
 		return decorateBeanDefinitionIfRequired(ele, definitionHolder, null);
 	}
 
+	/**
+	 * TODO 必要的时候装饰 BeanDefinition: 什么时候？装饰什么？
+	 */
 	public BeanDefinitionHolder decorateBeanDefinitionIfRequired(
 			Element ele, BeanDefinitionHolder definitionHolder, @Nullable BeanDefinition containingBd) {
 

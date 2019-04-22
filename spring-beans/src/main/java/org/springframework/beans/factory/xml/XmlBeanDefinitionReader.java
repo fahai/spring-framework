@@ -441,6 +441,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * mode gets {@link #detectValidationMode detected} from the given resource.
 	 * <p>Override this method if you would like full control over the validation
 	 * mode, even when something other than {@link #VALIDATION_AUTO} was set.
+	 * <p> 识别给定 Resource 的校验模式，根据 XML 文件正文内容前的内容来识别。
 	 * @see #detectValidationMode
 	 */
 	protected int getValidationModeForResource(Resource resource) {
@@ -463,6 +464,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * by the supplied {@link Resource}. If the file has a {@code DOCTYPE}
 	 * definition then DTD validation is used otherwise XSD validation is assumed.
 	 * <p>Override this method if you would like to customize resolution
+	 * <p> 委托给 XmlValidationModeDetector 来识别 Resource 的校验模式
 	 * of the {@link #VALIDATION_AUTO} mode.
 	 */
 	protected int detectValidationMode(Resource resource) {

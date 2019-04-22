@@ -116,6 +116,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 	/**
 	 * Register each bean definition within the given root {@code <beans/>} element.
+	 * <p>创建 BeanDefinitionParser 委托类，委托该类来处理解析逻辑</p>
+	 * <p>preProcessXml, parseBeanDefinitions 和 postProcessXml 是被定义好的了算法框架，头尾是空方法，留给子类来扩展。</p>
 	 */
 	@SuppressWarnings("deprecation")  // for Environment.acceptsProfiles(String...)
 	protected void doRegisterBeanDefinitions(Element root) {
@@ -128,7 +130,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		BeanDefinitionParserDelegate parent = this.delegate;
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
+		// 如果 namespace 为 http://www.springframework.org/schema/beans，那么便判断为 DefaultNamespace
 		if (this.delegate.isDefaultNamespace(root)) {
+			// TODO profile 属性的处理逻辑
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -162,7 +166,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 	/**
 	 * Parse the elements at the root level in the document:
-	 * "import", "alias", "bean".
+	 * "import", "alias", "bean", "beans".
 	 * @param root the DOM root element of the document
 	 */
 	protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
@@ -173,9 +177,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				if (node instanceof Element) {
 					Element ele = (Element) node;
 					if (delegate.isDefaultNamespace(ele)) {
+						// 解析默认 namespace 的逻辑
 						parseDefaultElement(ele, delegate);
 					}
 					else {
+						// 解析自定义 namespace 的逻辑
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -304,9 +310,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	}
 
 	/**
-	 * 根据 Element 解析出来 BeanDefinition，并组装成 BeanDefinitionHolder <br/>
+	 * 根据 Element 解析出来 BeanDefinition，并组装成 BeanDefinitionHolder.
+	 * <p>BeanDefinitionHolder 的设计是为了支持 bean 的别名</p>
 	 * 装饰 BeanDefinition ? <br/>
-	 *
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
 	 */
