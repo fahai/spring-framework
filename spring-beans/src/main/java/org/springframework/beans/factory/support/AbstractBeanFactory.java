@@ -1023,6 +1023,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return getMergedLocalBeanDefinition(beanName);
 	}
 
+	/**
+	 * TODO 如何判断 bean 是否为 factory
+	 * <P>直接使用 instance of 语法或者交由 parent bean factory 来判断</P>
+	 * @param name the name of the bean to check
+	 * @return
+	 * @throws NoSuchBeanDefinitionException
+	 */
 	@Override
 	public boolean isFactoryBean(String name) throws NoSuchBeanDefinitionException {
 		String beanName = transformedBeanName(name);
@@ -1225,6 +1232,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return a merged RootBeanDefinition, traversing the parent bean definition
 	 * if the specified bean corresponds to a child bean definition.
+	 * <p>优先从缓存 mergedBeanDefinitions 里面读取</p>
 	 * @param beanName the name of the bean to retrieve the merged definition for
 	 * @return a (potentially merged) RootBeanDefinition for the given bean
 	 * @throws NoSuchBeanDefinitionException if there is no bean with the given name
@@ -1524,6 +1532,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		if (mbd.getFactoryMethodName() != null) {
 			return null;
 		}
+		// TODO 没看懂这个方法的用途
 		return resolveBeanClass(mbd, beanName, typesToMatch);
 	}
 

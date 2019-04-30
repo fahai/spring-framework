@@ -30,6 +30,7 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 /**
  * Sample tests demonstrating "mock" server tests binding to server infrastructure
  * declared in a Spring ApplicationContext.
+ * <p>ApplicationContext 单元测试类</p>
  *
  * @author Rossen Stoyanchev
  * @since 5.0
