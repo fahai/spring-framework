@@ -424,6 +424,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Determine the class of the wrapped bean, resolving it from a
 	 * specified class name if necessary. Will also reload a specified
 	 * Class from its name when called with the bean class already resolved.
+	 * <p>加载 wrapped bean 的 class 对象，并 set 到 beanClass 属性</p>
 	 * @param classLoader the ClassLoader to use for resolving a (potential) class name
 	 * @return the resolved bean class
 	 * @throws ClassNotFoundException if the class name could be resolved
@@ -1067,6 +1068,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * Validate and prepare the method overrides defined for this bean.
 	 * Checks for existence of a method with the specified name.
+	 * <p>解析 BeanDefinition 时遇到 lookup-method 和 replace-method，会将其添加到 methodOverrides 属性中</p>
+	 * <P>这里没有做什么实质性的工作，只是对 methodOverrides 属性做了一些简单的校验</P>
 	 * @throws BeanDefinitionValidationException in case of validation failure
 	 */
 	public void prepareMethodOverrides() throws BeanDefinitionValidationException {
@@ -1085,6 +1088,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Validate and prepare the given method override.
 	 * Checks for existence of a method with the specified name,
 	 * marking it as not overloaded if none found.
+	 * <p>如果根据 methodName 在指定 beanClass 找到数量为 0，抛出没有指定 method 的异常；</p>
+	 * <p>如果数量为 1，则表明没有 overloaded，后续调用就没有必要做参数校验</p>
 	 * @param mo the MethodOverride object to validate
 	 * @throws BeanDefinitionValidationException in case of validation failure
 	 */
