@@ -399,6 +399,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * Register a dependent bean for the given bean,
 	 * to be destroyed before the given bean is destroyed.
 	 * <p>注册 bean 和 dependentBeans 的关系，如果 bean 被注销了，对应的 dependentBeans 也会被注销</p>
+	 * <p>dependentBeanMap: beanName -> dependentBeanNames</p>
+	 * <p>dependenciesForBeanMap: dependentBeanName -> beanNames</p>
+	 * <p>有了这两个 Map，就可以根据 beanName 来获取到它依赖的 bean 或者有哪些 bean 依赖了它</p>
 	 * @param beanName the name of the bean
 	 * @param dependentBeanName the name of the dependent bean
 	 */
@@ -413,7 +416,6 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 			}
 		}
 
-		// TODO dependenciesForBeanMap 和 dependentBeanMap 的区别是什么
 		synchronized (this.dependenciesForBeanMap) {
 			Set<String> dependenciesForBean =
 					this.dependenciesForBeanMap.computeIfAbsent(dependentBeanName, k -> new LinkedHashSet<>(8));

@@ -244,14 +244,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredType,
 			@Nullable final Object[] args, boolean typeCheckOnly) throws BeansException {
 
+		// STEP: 1. 转换字符串类型的 beanName，可能带有 "&" 符号
 		final String beanName = transformedBeanName(name);
 		Object bean;
 
 		// Eagerly check singleton cache for manually registered singletons.
-		// 从缓存或者实例工厂获取 Bean 对象
+		// STEP: 2. 从缓存或者实例工厂获取 Bean 对象
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
+			// STEP: 3. singleton bean 处理逻辑
 			if (logger.isTraceEnabled()) {
+				// STEP: 3.1 校验是否循环依赖
 				if (isSingletonCurrentlyInCreation(beanName)) {
 					logger.trace("Returning eagerly cached instance of singleton bean '" + beanName +
 							"' that is not fully initialized yet - a consequence of a circular reference");
@@ -260,10 +263,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+			// STEP: 3.2 从 普通 bean 或者 factoryBean 获取 bean 实例
 			// 得到 bean 实例后要做的第一步就是调用这个方法来检测正确性
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
-
+		// STEP: 4. prototype bean 处理逻辑
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
@@ -325,10 +329,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 
 				// Create bean instance.
+				// 上面是创建依赖的 bean，依赖创建完之后便可以做下面创建 bean 的操作
 				if (mbd.isSingleton()) {
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
-							// TODO 和上面创建 bean 逻辑的区别是啥
+							// getSingleton 里面的 getObject() 方法就是调用这里的 lamda 表达式
+							// TODO 这行 lamda 表达式不是很懂，表达式里面怎么就重写了 AbstractBeanFactory#getObject() 方法
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {
@@ -339,12 +345,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw ex;
 						}
 					});
+					// 如果是获取普通 bean，sharedInstance 怎么会是 factoryBean 呢
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
 					// scope 为 prototype 的场景：创建新的实例
+					// TODO before 和 after 这两个方法分别做了 add 和 remove，感觉最后啥也没做一样
 					Object prototypeInstance = null;
 					try {
 						beforePrototypeCreation(beanName);
@@ -364,6 +372,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					}
 					try {
 						// TODO 是如何根据不同的 scope 来创建 bean 实例的？
+						// 这里的逻辑跟上面 prototype 的代码写得一模一样，感觉就多 try-catch 的逻辑
 						Object scopedInstance = scope.get(beanName, () -> {
 							beforePrototypeCreation(beanName);
 							try {
@@ -410,6 +419,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return (T) bean;
 	}
 
+	/**
+	 * 根据 beanName 查找 bean 的范围：singleton，BeanDefinition，parent factoryBean
+	 * @param name the name of the bean to query
+	 * @return
+	 */
 	@Override
 	public boolean containsBean(String name) {
 		String beanName = transformedBeanName(name);
@@ -1428,8 +1442,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		ClassLoader beanClassLoader = getBeanClassLoader();
 		ClassLoader dynamicLoader = beanClassLoader;
+		// freshResolve 为 true，则说明 beanClass 对象是 String，需要加载为 Class 对象
 		boolean freshResolve = false;
 
+		// STEP 1. 只做类型检查的处理逻辑
 		if (!ObjectUtils.isEmpty(typesToMatch)) {
 			// When just doing type checks (i.e. not creating an actual instance yet),
 			// use the specified temporary class loader (e.g. in a weaving scenario).
@@ -1448,6 +1464,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		String className = mbd.getBeanClassName();
 		if (className != null) {
+			// TODO 2. 解析 className 里面的表达式？
 			Object evaluated = evaluateBeanDefinitionString(className, mbd);
 			if (!className.equals(evaluated)) {
 				// A dynamically resolved expression, supported as of 4.2...
@@ -1465,6 +1482,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			if (freshResolve) {
 				// When resolving against a temporary class loader, exit early in order
 				// to avoid storing the resolved Class in the bean definition.
+				// STEP 3. 通过 dynamicLoader 或者 defaultClassLoader 来加载 beanClass
 				if (dynamicLoader != null) {
 					try {
 						return dynamicLoader.loadClass(className);
@@ -1480,6 +1498,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		// Resolve regularly, caching the result in the BeanDefinition...
+		// STEP 4. 通过 beanClassLoader 或者 defaultClassLoader 来加载 beanClass，并把加载出来的对象 set 到 beanDefinition 的属性里面
 		return mbd.resolveBeanClass(beanClassLoader);
 	}
 
@@ -1684,12 +1703,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// Now we have the bean instance, which may be a normal bean or a FactoryBean.
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
-		// 返回 bean 实例
+		// 如果不是 FactoryBean，直接返回；如果是 FactoryBean，beanName 带有"&"符号，表明期望返回 FactoryBean
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			return beanInstance;
 		}
 
-		// 返回 FactoryBean 的逻辑
+		// 返回 FactoryBean 生产 bean 的逻辑
 		Object object = null;
 		if (mbd == null) {
 			object = getCachedObjectForFactoryBean(beanName);

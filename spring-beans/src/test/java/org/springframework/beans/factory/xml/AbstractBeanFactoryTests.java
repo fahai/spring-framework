@@ -57,6 +57,7 @@ public abstract class AbstractBeanFactoryTests {
 	public void inheritance() {
 		assertTrue(getBeanFactory().containsBean("rod"));
 		assertTrue(getBeanFactory().containsBean("roderick"));
+		TestBean kathy = (TestBean) getBeanFactory().getBean("kathy");
 		TestBean rod = (TestBean) getBeanFactory().getBean("rod");
 		TestBean roderick = (TestBean) getBeanFactory().getBean("roderick");
 		assertTrue("not == ", rod != roderick);
