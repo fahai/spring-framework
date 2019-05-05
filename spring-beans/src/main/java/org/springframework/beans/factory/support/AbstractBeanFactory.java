@@ -885,6 +885,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return result;
 	}
 
+	/**
+	 * 删除元素在 List 的位置，在 List 的后面添加元素
+	 * @param beanPostProcessor the post-processor to register
+	 */
 	@Override
 	public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
 		Assert.notNull(beanPostProcessor, "BeanPostProcessor must not be null");

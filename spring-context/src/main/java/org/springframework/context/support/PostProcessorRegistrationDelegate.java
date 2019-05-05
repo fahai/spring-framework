@@ -53,7 +53,8 @@ final class PostProcessorRegistrationDelegate {
 
 
 	/**
-	 * TODO
+	 * TODO 最后为什么要清理 merged bean definition cache
+	 * <p>BeanDefinitionRegistryPostProcessor 继承了 BeanFactoryPostProcessor，BeanFactoryPostProcessor 的回调方法 BeanDefinitionRegistryPostProcessor 也有</p>
 	 * @param beanFactory
 	 * @param beanFactoryPostProcessors
 	 */
@@ -61,6 +62,7 @@ final class PostProcessorRegistrationDelegate {
 			ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
 
 		// Invoke BeanDefinitionRegistryPostProcessors first, if any.
+		// STEP 1 先激活 BeanDefinitionRegistryPostProcessor 的方法
 		Set<String> processedBeans = new HashSet<>();
 
 		if (beanFactory instanceof BeanDefinitionRegistry) {
@@ -68,7 +70,7 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
 
-			// 分类 registryProcessor 和 regularPostProcessors
+			// STEP 1.1 分类请求参数里面的 registryProcessor 和 regularPostProcessors
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
@@ -88,7 +90,7 @@ final class PostProcessorRegistrationDelegate {
 			List<BeanDefinitionRegistryPostProcessor> currentRegistryProcessors = new ArrayList<>();
 
 			// First, invoke the BeanDefinitionRegistryPostProcessors that implement PriorityOrdered.
-			// 调用实现了 PriorOrdered 类的 BeanDefinitionRegistryPostProcessors
+			// STEP 1.2 筛选 beanFactory 容器里面实现了 PriorOrdered 类的 BeanDefinitionRegistryPostProcessors，并执行激活
 			String[] postProcessorNames =
 					beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
@@ -103,7 +105,7 @@ final class PostProcessorRegistrationDelegate {
 			currentRegistryProcessors.clear();
 
 			// Next, invoke the BeanDefinitionRegistryPostProcessors that implement Ordered.
-			// 调用实现了 Ordered 类的 BeanDefinitionRegistryPostProcessors
+			// STEP 1.3 筛选 beanFactory 容器里面实现了 PriorOrdered 类的 BeanDefinitionRegistryPostProcessors，并执行激活
 			postProcessorNames = beanFactory.getBeanNamesForType(BeanDefinitionRegistryPostProcessor.class, true, false);
 			for (String ppName : postProcessorNames) {
 				if (!processedBeans.contains(ppName) && beanFactory.isTypeMatch(ppName, Ordered.class)) {
@@ -117,7 +119,7 @@ final class PostProcessorRegistrationDelegate {
 			currentRegistryProcessors.clear();
 
 			// Finally, invoke all other BeanDefinitionRegistryPostProcessors until no further ones appear.
-			// 最后，调用剩余的 BeanDefinitionRegistryPostProcessors
+			// STEP 1.4 激活 beanFactory 容器里面剩下的 BeanDefinitionRegistryPostProcessors
 			boolean reiterate = true;
 			while (reiterate) {
 				reiterate = false;
@@ -136,18 +138,20 @@ final class PostProcessorRegistrationDelegate {
 			}
 
 			// Now, invoke the postProcessBeanFactory callback of all processors handled so far.
+			// STEP 2 激活 BeanFactoryPostProcessor 的 postProcessBeanFactory() 回调方法
 			invokeBeanFactoryPostProcessors(registryProcessors, beanFactory);
 			invokeBeanFactoryPostProcessors(regularPostProcessors, beanFactory);
 		}
 
 		else {
 			// Invoke factory processors registered with the context instance.
+			// STEP 2 激活 BeanFactoryPostProcessor 的 postProcessBeanFactory() 回调方法
 			invokeBeanFactoryPostProcessors(beanFactoryPostProcessors, beanFactory);
 		}
 
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let the bean factory post-processors apply to them!
-		// 这里获取 BeanFactoryPostProcessor 类型的 Bean 名称
+		// STEP 3 查询 BeanFactoryPostProcessor 实现类，如果在前面已经处理了，则忽略；如果没有则按 PriorityOrdered, Ordered, non-Ordered 顺序触发回调方法
 		String[] postProcessorNames =
 				beanFactory.getBeanNamesForType(BeanFactoryPostProcessor.class, true, false);
 
@@ -192,6 +196,7 @@ final class PostProcessorRegistrationDelegate {
 
 		// Clear cached merged bean definitions since the post-processors might have
 		// modified the original metadata, e.g. replacing placeholders in values...
+		// STEP 4 清理 merged bean definition cache
 		beanFactory.clearMetadataCache();
 	}
 
@@ -275,6 +280,7 @@ final class PostProcessorRegistrationDelegate {
 
 		// Re-register post-processor for detecting inner beans as ApplicationListeners,
 		// moving it to the end of the processor chain (for picking up proxies etc).
+		// STEP 把 ApplicationListenerDetector 添加到列表的后面
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(applicationContext));
 	}
 

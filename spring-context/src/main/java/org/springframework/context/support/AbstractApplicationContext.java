@@ -531,7 +531,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
-				// 把 BeanPostProcessor 维护到 beanFactory.beanPostProcessors 列表对象里面
+				// 把 BeanPostProcessor 按照顺序维护到 beanFactory.beanPostProcessors 列表对象里面
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
@@ -639,6 +639,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see #getBeanFactory()
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+		// 基于 XML 会 loadBeanDefinitions，基于 Annotation 设置 id
 		refreshBeanFactory();
 		return getBeanFactory();
 	}
@@ -731,6 +732,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Initialize the MessageSource.
 	 * Use parent's if none defined in this context.
+	 * <p>初始化 MessageSource 对象及其 parent，如果当前 beanFactory 没有，则新建并注册到 singleton 缓存里面</p>
 	 */
 	protected void initMessageSource() {
 		ConfigurableListableBeanFactory beanFactory = getBeanFactory();
@@ -764,6 +766,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Initialize the ApplicationEventMulticaster.
 	 * Uses SimpleApplicationEventMulticaster if none defined in the context.
+	 * <p>初始化 ApplicationEventMulticaster 对象及其 parent，如果当前 beanFactory 没有，则新建并注册到 singleton 缓存里面</p>
 	 * @see org.springframework.context.event.SimpleApplicationEventMulticaster
 	 */
 	protected void initApplicationEventMulticaster() {
@@ -828,18 +831,21 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void registerListeners() {
 		// Register statically specified listeners first.
+		// STEP 注册已有的 ApplicationListener，一般是用户手动添加的场景
 		for (ApplicationListener<?> listener : getApplicationListeners()) {
 			getApplicationEventMulticaster().addApplicationListener(listener);
 		}
 
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let post-processors apply to them!
+		// STEP 注册实现了 ApplicationLister 的监听器
 		String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
 		for (String listenerBeanName : listenerBeanNames) {
 			getApplicationEventMulticaster().addApplicationListenerBean(listenerBeanName);
 		}
 
 		// Publish early application events now that we finally have a multicaster...
+		// STEP 发布前期的事件给监听器
 		Set<ApplicationEvent> earlyEventsToProcess = this.earlyApplicationEvents;
 		this.earlyApplicationEvents = null;
 		if (earlyEventsToProcess != null) {
@@ -854,33 +860,33 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * initializing all remaining singleton beans.
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
-		// Initialize conversion service for this context.
+		// STEP Initialize conversion service for this context.
 		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
 			beanFactory.setConversionService(
 					beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class));
 		}
 
-		// Register a default embedded value resolver if no bean post-processor
+		// STEP Register a default embedded value resolver if no bean post-processor
 		// (such as a PropertyPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
 		if (!beanFactory.hasEmbeddedValueResolver()) {
 			beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
 		}
 
-		// Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
+		// STEP Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
 		String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
 		for (String weaverAwareName : weaverAwareNames) {
 			getBean(weaverAwareName);
 		}
 
-		// Stop using the temporary ClassLoader for type matching.
+		// STEP Stop using the temporary ClassLoader for type matching.
 		beanFactory.setTempClassLoader(null);
 
-		// Allow for caching all bean definition metadata, not expecting further changes.
+		// STEP Allow for caching all bean definition metadata, not expecting further changes.
 		beanFactory.freezeConfiguration();
 
-		// Instantiate all remaining (non-lazy-init) singletons.
+		// STEP Instantiate all remaining (non-lazy-init) singletons.
 		beanFactory.preInstantiateSingletons();
 	}
 
