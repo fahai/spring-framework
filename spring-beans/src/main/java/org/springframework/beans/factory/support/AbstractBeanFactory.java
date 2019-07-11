@@ -267,7 +267,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			// 得到 bean 实例后要做的第一步就是调用这个方法来检测正确性
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
-		// STEP: 4. prototype bean 处理逻辑
+		// STEP: 4. 从单例缓存取不到 bean 的处理逻辑
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
@@ -330,11 +330,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// Create bean instance.
 				// 上面是创建依赖的 bean，依赖创建完之后便可以做下面创建 bean 的操作
+				// STEP singleton bean 的创建逻辑
 				if (mbd.isSingleton()) {
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 							// getSingleton 里面的 getObject() 方法就是调用这里的 lamda 表达式
-							// TODO 这行 lamda 表达式不是很懂，表达式里面怎么就重写了 AbstractBeanFactory#getObject() 方法
+							// getSingleton 接收 ObjectFactory 接口实现类作为入参，这里相当于一个匿名类，
+							// 这个匿名类实现了 ObjectFactory 接口唯一的方法：getObject()
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {
@@ -348,11 +350,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					// 如果是获取普通 bean，sharedInstance 怎么会是 factoryBean 呢
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
-
+				// STEP prototype bean 的创建逻辑
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
-					// scope 为 prototype 的场景：创建新的实例
-					// TODO before 和 after 这两个方法分别做了 add 和 remove，感觉最后啥也没做一样
+					// scope 为 prototype 的场景，则直接创建新的实例
 					Object prototypeInstance = null;
 					try {
 						beforePrototypeCreation(beanName);
@@ -363,7 +364,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					}
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
-
+				// STEP 其他 scope bean 的创建逻辑
 				else {
 					String scopeName = mbd.getScope();
 					final Scope scope = this.scopes.get(scopeName);
@@ -371,8 +372,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						throw new IllegalStateException("No Scope registered for scope name '" + scopeName + "'");
 					}
 					try {
+						// 如果 scope 不是 singleton, 不是 protype，那么调用 scope.get() 方法来创建实例
 						// TODO 是如何根据不同的 scope 来创建 bean 实例的？
-						// 这里的逻辑跟上面 prototype 的代码写得一模一样，感觉就多 try-catch 的逻辑
 						Object scopedInstance = scope.get(beanName, () -> {
 							beforePrototypeCreation(beanName);
 							try {

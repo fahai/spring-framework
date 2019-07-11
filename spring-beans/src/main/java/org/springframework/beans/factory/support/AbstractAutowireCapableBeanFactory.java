@@ -642,6 +642,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Register bean as disposable.
+		// 针对不同的 scope，销毁 bean 的方式不一样
 		try {
 			registerDisposableBeanIfNecessary(beanName, bean, mbd);
 		}
